@@ -264,7 +264,7 @@ if __name__ == '__main__':
     parser.add_argument('--print-freq', '-p', default=320, type=int,
                         metavar='N', help='print frequency (default: 10)')  # print frequency
 
-    parser.add_argument('--resume', default=ROOT / '2019-06-25 11:52:54/49/2019-06-25 11:52:54flat_img_classifyAndRegress_grey-data1024_greyV2.pkl', type=str, 
+    parser.add_argument('--resume', default=None, type=str, 
                         help='Path to previous saved model to restart from') 
     
     parser.add_argument('--data_path_train', default=ROOT / 'dataset/unwarp_new/train/data1024_greyV2/color/', type=str,
