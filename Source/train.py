@@ -11,6 +11,9 @@ import torch
 import re
 import warnings
 from pathlib import Path
+
+from torch.autograd import Variable
+
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]
 sys.path.append('ROOT')
@@ -45,17 +48,15 @@ def train(args):
 
     if args.parallel is not None:
         device_ids = list(map(int, args.parallel))
-        args.gpu = device_ids[0]
-        if args.gpu < 8:
-            torch.cuda.set_device(args.gpu)
+        gpu = device_ids[0]
+        device = torch.device('cuda:' + str(gpu))
         model = torch.nn.DataParallel(model, device_ids=device_ids)
-        model.cuda(args.gpu)
-    elif args.distributed:
-        model.cuda()
-        model = torch.nn.parallel.DistributedDataParallel(model)
+        model.cuda(gpu)
     else:
-        warnings.warn('no gpu , go sleep !')
-        exit()
+        device = torch.device('cpu')
+        model = torch.nn.DataParallel(model, device_ids=[0, 1, 2, 3, 4])
+
+    args.device = device
 
     if args.optimizer == 'SGD':
         optimizer = torch.optim.SGD(model.parameters(), lr=0.0001, momentum=0.8, weight_decay=1e-12)
@@ -68,7 +69,10 @@ def train(args):
     if args.resume is not None:
         if os.path.isfile(args.resume):
             print("Loading model and optimizer from checkpoint '{}'".format(args.resume))
-            checkpoint = torch.load(args.resume, map_location='cuda:'+str(args.gpu))
+            checkpoint = torch.load(args.resume,
+                                    map_location=device,
+                                    weights_only=True
+                                    )
 
             model.load_state_dict(checkpoint['model_state'])
             optimizer.load_state_dict(checkpoint['optimizer_state'])
@@ -83,13 +87,13 @@ def train(args):
         else:
             print("No checkpoint found at '{}'".format(args.resume))
             
-    loss_fun_classes = Losses(classify_size_average=True, args_gpu=args.gpu)
+    loss_fun_classes = Losses(classify_size_average=True, device=device)
     loss_fun = loss_fun_classes.loss_fn_v6v8_compareLSC
     loss_classify_fun = loss_fun_classes.loss_fn_binary_cross_entropy_with_logits
 
-    FlatImg = utils.FlatImg(args=args, path=path, date=date, date_time=date_time, _re_date=_re_date, model=model, \
-                            reslut_file=reslut_file, n_classes=n_classes, optimizer=optimizer, \
-                            loss_fn=loss_fun, loss_classify_fn=loss_classify_fun, data_loader=PerturbedDatastsForRegressAndClassify_pickle_color_v2C1, data_loader_hdf5=None, \
+    FlatImg = utils.FlatImg(args=args, path=path, date=date, date_time=date_time, _re_date=_re_date, model=model,
+                            reslut_file=reslut_file, n_classes=n_classes, optimizer=optimizer,
+                            loss_fn=loss_fun, loss_classify_fn=loss_classify_fun, data_loader=PerturbedDatastsForRegressAndClassify_pickle_color_v2C1, data_loader_hdf5=None,
                             data_path=data_path, data_path_validate=data_path_validate, data_path_test=data_path_test, data_preproccess=False)          # , valloaderSet=valloaderSet, v_loaderSet=v_loaderSet
     ''' load data '''
     FlatImg.loadTestData()
@@ -132,8 +136,8 @@ def train(args):
             for i, (images, labels, labels_classify) in enumerate(trainloader):
 
                 images = Variable(images)
-                labels = Variable(labels.cuda(args.gpu))
-                labels_classify = Variable(labels_classify.cuda(args.gpu))
+                labels = Variable(labels.to(device))
+                labels_classify = Variable(labels_classify.to(device))
 
                 optimizer.zero_grad()
                 outputs, outputs_classify = FlatImg.model(images, is_softmax=False)
@@ -287,7 +291,7 @@ if __name__ == '__main__':
 
     # parser.set_defaults(resume='./2019-06-25 11:52:54/49/2019-06-25 11:52:54flat_img_classifyAndRegress_grey-data1024_greyV2.pkl')
 
-    parser.add_argument('--parallel', default='6', type=list,
+    parser.add_argument('--parallel', default=None, type=list,
                         help='choice the gpu id for parallel ')
 
     args = parser.parse_args()

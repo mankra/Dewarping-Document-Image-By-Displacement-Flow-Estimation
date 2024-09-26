@@ -41,31 +41,29 @@ def train(args):
 
     if args.parallel is not None:
         device_ids = list(map(int, args.parallel))
-        args.gpu = device_ids[0]
-        if args.gpu < 8:
-            torch.cuda.set_device(args.gpu)
+        gpu = device_ids[0]
+        device = torch.device('cuda:' + str(gpu))
         model = torch.nn.DataParallel(model, device_ids=device_ids)
-        model.cuda(args.gpu)
-    elif args.distributed:
-        model.cuda()
-        model = torch.nn.parallel.DistributedDataParallel(model)
+        model.cuda(gpu)
     else:
-        warnings.warn('no gpu , go sleep !')
-        exit()
+        device = torch.device('cpu')
+        model = torch.nn.DataParallel(model, device_ids=[0, 1, 2, 3, 4])
+
+    args.device = device
 
     if args.resume is not None:
         if os.path.isfile(args.resume):
             print("Loading model and optimizer from checkpoint '{}'".format(args.resume))
-            checkpoint = torch.load(args.resume, map_location='cuda:'+str(args.gpu))
+            checkpoint = torch.load(args.resume, map_location=device, weights_only=True)
             model.load_state_dict(checkpoint['model_state'])
             print("Loaded checkpoint '{}' (epoch {})"
                   .format(args.resume, checkpoint['epoch']))
         else:
             print("No checkpoint found at '{}'".format(args.resume))
 
-    FlatImg = utils.FlatImg(args=args, path=path, date=date, date_time=date_time, _re_date=_re_date, data_split=None, model=model, \
-                            reslut_file=reslut_file, n_classes=n_classes, optimizer=None, \
-                            loss_fn=None, loss_classify_fn=None, data_loader=PerturbedDatastsForRegressAndClassify_pickle_color_v2C1, data_loader_hdf5=None, \
+    FlatImg = utils.FlatImg(args=args, path=path, date=date, date_time=date_time, _re_date=_re_date, data_split=None, model=model,
+                            reslut_file=reslut_file, n_classes=n_classes, optimizer=None,
+                            loss_fn=None, loss_classify_fn=None, data_loader=PerturbedDatastsForRegressAndClassify_pickle_color_v2C1, data_loader_hdf5=None,
                             data_path=None, data_path_validate=None, data_path_test=data_path_test, data_preproccess=False)          # , valloaderSet=valloaderSet, v_loaderSet=v_loaderSet
     ''' load data '''
     FlatImg.loadTestData()

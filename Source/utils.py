@@ -370,10 +370,10 @@ class AverageMeter(object):
         self.avg = self.sum / self.count
 
 class FlatImg(object):
-    def __init__(self, args, path, date, date_time, _re_date, model,\
-                 reslut_file, n_classes, optimizer, \
-                 model_D=None, optimizer_D=None, \
-                 loss_fn=None, loss_classify_fn=None, data_loader=None, data_loader_hdf5=None, dataPackage_loader = None, data_split=None, \
+    def __init__(self, args, path, date, date_time, _re_date, model,
+                 reslut_file, n_classes, optimizer,
+                 model_D=None, optimizer_D=None,
+                 loss_fn=None, loss_classify_fn=None, data_loader=None, data_loader_hdf5=None, dataPackage_loader = None, data_split=None,
                  data_path=None, data_path_validate=None, data_path_test=None, data_preproccess=True):     #, valloaderSet, v_loaderSet
         self.args = args
         self.path = path
@@ -453,7 +453,7 @@ class FlatImg(object):
 
     def loadValidateAndTestData(self, is_shuffle=True, sub_dir='shrink_512/crop/'):
         v1_loader = self.data_loader(self.data_path_validate, split='validate', img_shrink=self.args.img_shrink, is_return_img_name=True, preproccess=self.data_preproccess)
-        valloader1 = data.DataLoader(v1_loader, batch_size=self.args.batch_size, num_workers=self.args.batch_size, pin_memory=True, \
+        valloader1 = data.DataLoader(v1_loader, batch_size=self.args.batch_size, num_workers=self.args.batch_size, pin_memory=True,
                                        shuffle=is_shuffle)
 
         '''val sets'''
@@ -466,7 +466,7 @@ class FlatImg(object):
         # sub_dir = 'crop/crop/'
 
         t1_loader = self.data_loader(self.data_path_test, split='test', img_shrink=self.args.img_shrink, is_return_img_name=True)
-        testloader1 = data.DataLoader(t1_loader, batch_size=self.args.batch_size, num_workers=self.args.batch_size, pin_memory=True, \
+        testloader1 = data.DataLoader(t1_loader, batch_size=self.args.batch_size, num_workers=self.args.batch_size, pin_memory=True,
                                        shuffle=False)
 
         '''test sets'''
@@ -488,7 +488,7 @@ class FlatImg(object):
 
 
         t1_loader = self.data_loader(self.data_path_test, split='test', img_shrink=None, is_return_img_name=True)
-        testloader1 = data.DataLoader(t1_loader, batch_size=self.args.batch_size, num_workers=self.args.batch_size, pin_memory=True, \
+        testloader1 = data.DataLoader(t1_loader, batch_size=self.args.batch_size, num_workers=self.args.batch_size, pin_memory=True,
                                        shuffle=False)
 
         '''test sets'''
@@ -529,7 +529,7 @@ class FlatImg(object):
                         # save_img_ = True
                         # save_img_ = random.choices([True, False], weights=[0.2, 0.8])[0]
 
-                        images_val = Variable(images_val.cuda(self.args.gpu))
+                        images_val = Variable(images_val.to(self.args.device))
 
                         outputs, outputs_classify = self.model(images_val, is_softmax=True)
                         outputs_classify = outputs_classify.squeeze(1)
@@ -568,9 +568,9 @@ class FlatImg(object):
                             save_img_ = random.choices([True, False], weights=[0.005, 0.995])[0]
                             # save_img_ = True
 
-                            images_val = Variable(images_val.cuda(self.args.gpu))
-                            labels_val = Variable(labels_val.cuda(self.args.gpu))
-                            labels_classify_val = Variable(labels_classify_val.cuda(self.args.gpu))
+                            images_val = Variable(images_val.to(self.args.device))
+                            labels_val = Variable(labels_val.to(self.args.device))
+                            labels_classify_val = Variable(labels_classify_val.to(self.args.device))
 
                             outputs, outputs_classify = self.model(images_val, is_softmax=False)
                             outputs_classify = outputs_classify.squeeze(1)
@@ -642,7 +642,7 @@ class FlatImg(object):
                         # save_img_ = random.choices([True, False], weights=[0.2, 0.8])[0]
 
                         if save_img_:
-                            images_val = Variable(images_val.cuda(self.args.gpu))
+                            images_val = Variable(images_val).to(self.args.device)
 
                             outputs, outputs_classify = self.model(images_val, is_softmax=True)
                             outputs_classify = outputs_classify.squeeze(1)
@@ -680,7 +680,7 @@ class FlatImg(object):
                         # save_img_ = random.choices([True, False], weights=[0.4, 0.6])[0]
                         # save_img_ = random.choices([True, False], weights=[0.2, 0.8])[0]
                         if im_name[0] in index:
-                            images_val = Variable(images_val.cuda(self.args.gpu))
+                            images_val = Variable(images_val.to(self.args.device))
 
                             outputs, outputs_classify = self.model(images_val, is_softmax=True)
                             outputs_classify = outputs_classify.squeeze(1)

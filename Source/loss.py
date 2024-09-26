@@ -4,18 +4,18 @@ from torch.autograd import Variable
 import torch.autograd as autograd
 
 class Losses(object):
-    def __init__(self, classify_size_average=True, args_gpu=0):
+    def __init__(self, device, classify_size_average=True):
         self.classify_size_average = classify_size_average
-        self.args_gpu = args_gpu
-        self.kernel_5 = torch.ones(2, 1, 5, 5).cuda(self.args_gpu)
-        self.kernel_1_5 = torch.ones(1, 1, 5, 5).cuda(self.args_gpu)
-        self.kernel = torch.ones(2, 1, 3, 3).cuda(self.args_gpu)
-        self.kernel_1_3 = torch.ones(1, 1, 3, 3).cuda(self.args_gpu)
+        self.device = device
+        self.kernel_5 = torch.ones(2, 1, 5, 5).to(self.device)
+        self.kernel_1_5 = torch.ones(1, 1, 5, 5).to(self.device)
+        self.kernel = torch.ones(2, 1, 3, 3).to(self.device)
+        self.kernel_1_3 = torch.ones(1, 1, 3, 3).to(self.device)
         # self.lambda_ = 0.1
         self.lambda_ = 0.5
 
-        self.matrices_2 = torch.full((1024, 960), 2, dtype=torch.float).cuda(self.args_gpu)
-        self.matrices_0 = torch.full((1024, 960), 0, dtype=torch.float).cuda(self.args_gpu)
+        self.matrices_2 = torch.full((1024, 960), 2, dtype=torch.float).to(self.device)
+        self.matrices_0 = torch.full((1024, 960), 0, dtype=torch.float).to(self.device)
 
 
     def loss_fn_v6v8_compareLSC(self, input_, target, outputs_classify, labels_classify, size_average=False):
