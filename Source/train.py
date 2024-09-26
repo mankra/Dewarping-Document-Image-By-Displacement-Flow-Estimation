@@ -189,7 +189,7 @@ def train(args):
                     del loss_l1_list[:]
                     del loss_CS_list[:]
                     del loss_local_list[:]
-            FlatImg.saveModel_epoch(epoch, save_path=path)      # FlatImg.saveModel(epoch, save_path=path)
+            FlatImg.saveModel_epoch(epoch)      # FlatImg.saveModel(epoch, save_path=path)
 
             model.eval()
             # FlatImg.testModelV2GreyC1_index(epoch, train_time, ['36_2 copy.png', '17_1 copy.png'])
