@@ -104,13 +104,15 @@ def train(args):
     FlatImg.lambda_loss_classify = 1
     
     epoch_start = checkpoint['epoch'] if args.resume is not None else 0
-    
+
     if args.schema == 'train':
         trainloader = FlatImg.loadTrainData(data_split='train', is_shuffle=True)
-        FlatImg.loadValidateAndTestData(is_shuffle=True, sub_dir=test_shrink_sub_dir)
+        FlatImg.loadValidateAndTestData(is_shuffle=True, sub_dir="test_shrink_sub_dir") #sub_dir=test_shrink_sub_dir)
         trainloader_len = len(trainloader)
 
+        print(f"start: {epoch_start}, args {args.n_epoch}")
         for epoch in range(epoch_start, args.n_epoch):
+            print(f"epoch: {epoch}")
 
             if epoch >= 10 and epoch < 20:
                 optimizer.param_groups[0]['lr'] = 0.5 * args.l_rate
@@ -187,7 +189,7 @@ def train(args):
                     del loss_l1_list[:]
                     del loss_CS_list[:]
                     del loss_local_list[:]
-            FlatImg.saveModel_epoch(epoch)      # FlatImg.saveModel(epoch, save_path=path)
+            FlatImg.saveModel_epoch(epoch, save_path=path)      # FlatImg.saveModel(epoch, save_path=path)
 
             model.eval()
             # FlatImg.testModelV2GreyC1_index(epoch, train_time, ['36_2 copy.png', '17_1 copy.png'])
