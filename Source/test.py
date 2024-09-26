@@ -46,8 +46,11 @@ def train(args):
         model = torch.nn.DataParallel(model, device_ids=device_ids)
         model.cuda(gpu)
     else:
-        device = torch.device('cpu')
-        model = torch.nn.DataParallel(model, device_ids=[0, 1, 2, 3, 4])
+        if torch.cuda.is_available():
+            device = torch.device('cuda')
+        else:
+            device = torch.device('cpu')
+        model = torch.nn.DataParallel(model)
 
     args.device = device
 

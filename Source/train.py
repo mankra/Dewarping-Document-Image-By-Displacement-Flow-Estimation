@@ -53,8 +53,11 @@ def train(args):
         model = torch.nn.DataParallel(model, device_ids=device_ids)
         model.cuda(gpu)
     else:
-        device = torch.device('cpu')
-        model = torch.nn.DataParallel(model, device_ids=[0, 1, 2, 3, 4])
+        if torch.cuda.is_available():
+            device = torch.device('cuda')
+        else:
+            device = torch.device('cpu')
+        model = torch.nn.DataParallel(model)
 
     args.device = device
 
@@ -107,18 +110,18 @@ def train(args):
 
     if args.schema == 'train':
         trainloader = FlatImg.loadTrainData(data_split='train', is_shuffle=True)
-        FlatImg.loadValidateAndTestData(is_shuffle=True, sub_dir="test_shrink_sub_dir") #sub_dir=test_shrink_sub_dir)
+        FlatImg.loadValidateAndTestData(is_shuffle=True) #sub_dir=test_shrink_sub_dir)
         trainloader_len = len(trainloader)
 
         print(f"start: {epoch_start}, args {args.n_epoch}")
         for epoch in range(epoch_start, args.n_epoch):
             print(f"epoch: {epoch}")
 
-            if epoch >= 10 and epoch < 20:
+            if 10 <= epoch < 20:
                 optimizer.param_groups[0]['lr'] = 0.5 * args.l_rate
-            elif epoch >= 20 and epoch < 30:
+            elif 20 <= epoch < 30:
                 optimizer.param_groups[0]['lr'] = 0.1 * args.l_rate
-            elif epoch >= 30 and epoch < 40:
+            elif 30 <= epoch < 40:
                 optimizer.param_groups[0]['lr'] = 0.05 * args.l_rate
             elif epoch >= 40:
                 optimizer.param_groups[0]['lr'] = 0.01 * args.l_rate
