@@ -18,4 +18,4 @@ python3 ./train.py \
   --output-path "$OUTPUT_PATH" \
   --resume "$CHECKPOINT"\
   --schema 'train'  \
-  --n_epoch '50'
+  --n_epoch '51'

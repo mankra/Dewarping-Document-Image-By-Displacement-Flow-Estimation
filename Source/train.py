@@ -9,7 +9,7 @@ import time
 import argparse
 import torch
 import re
-import warnings
+import wandb
 from pathlib import Path
 
 from torch.autograd import Variable
@@ -44,7 +44,7 @@ def train(args):
 
     n_classes = 2
     '''network'''
-    model = ResnetDilatedRgressAndClassifyV2v6v4c1GN(n_classes=n_classes, num_filter=32, BatchNorm='GN', in_channels=3) #
+    model = ResnetDilatedRgressAndClassifyV2v6v4c1GN(n_classes=n_classes, num_filter=32, BatchNorm='GN', in_channels=3)
 
     if args.parallel is not None:
         device_ids = list(map(int, args.parallel))
@@ -109,6 +109,23 @@ def train(args):
     epoch_start = checkpoint['epoch'] if args.resume is not None else 0
 
     if args.schema == 'train':
+        if args.wandb:
+            # start a new wandb run to track this script
+            wandb.init(
+                # set the wandb project where this run will be logged
+                project="dewarp_1",
+
+                # track hyperparameters and run metadata
+                config={
+                    "learning_rate": optimizer.param_groups[0]['lr'],
+                    "architecture": "NA",
+                    "dataset": "forms_short",
+                    "epochs": 2,
+                }
+            )
+
+            wandb.watch(model, log_freq=100)
+
         trainloader = FlatImg.loadTrainData(data_split='train', is_shuffle=True)
         FlatImg.loadValidateAndTestData(is_shuffle=True) #sub_dir=test_shrink_sub_dir)
         trainloader_len = len(trainloader)
@@ -154,6 +171,9 @@ def train(args):
 
                 loss = FlatImg.lambda_loss*loss_regress + FlatImg.lambda_loss_classify*loss_classify
 
+                if args.wandb:
+                    wandb.log({"loss": loss})
+
                 losses.update(loss.item())
                 loss.backward()
                 optimizer.step()
@@ -192,6 +212,7 @@ def train(args):
                     del loss_l1_list[:]
                     del loss_CS_list[:]
                     del loss_local_list[:]
+
             FlatImg.saveModel_epoch(epoch)      # FlatImg.saveModel(epoch, save_path=path)
 
             model.eval()
@@ -211,6 +232,8 @@ def train(args):
                 print(' Error: validate or test')
 
             print('\n')
+
+            wandb.finish()
     elif args.schema == 'test':
         epoch = checkpoint['epoch'] if args.resume is not None else 0
         model.eval()
@@ -293,6 +316,10 @@ if __name__ == '__main__':
 
     parser.add_argument('--schema', type=str, default='test',
                         help='train or test')
+
+    parser.add_argument('--wandb', type=str,
+                        action=argparse.BooleanOptionalAction,
+                        help='activate wandb')
 
     # parser.set_defaults(resume='./2019-06-25 11:52:54/49/2019-06-25 11:52:54flat_img_classifyAndRegress_grey-data1024_greyV2.pkl')
 
